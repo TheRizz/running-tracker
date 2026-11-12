@@ -18,7 +18,8 @@ The key gives read-only access to your Garmin data. It's stored privately in the
 
 1. Open the sign-up link on your iPhone, enter the invite code, your name, and your goal, and choose **Apple Watch**.
 2. The page shows an **Upload URL** and a **member code**. Keep that page open, or copy both somewhere safe.
-3. Follow [APPLE_SHORTCUT.md](APPLE_SHORTCUT.md) to set up the Shortcut, or install the shared version if the organizer sent you a link.
-4. Run the Shortcut once by hand in **backfill** mode to load everything since Jan 1, 2026. After that, it runs by itself at noon and midnight.
+3. Install the free **[Actions](https://apps.apple.com/app/id1586435171)** app from the App Store. The Shortcut needs it to read your workouts.
+4. Follow [APPLE_SHORTCUT.md](APPLE_SHORTCUT.md) to set up the Shortcut, or install the shared version if the organizer sent you a link.
+5. Run the Shortcut once by hand in **backfill** mode to load everything since Jan 1, 2026. After that, it runs by itself at noon and midnight.
 
 Only workout type, date, and distance are sent: no routes, heart rate, or other health data.
