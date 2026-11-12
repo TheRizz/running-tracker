@@ -1,0 +1,10 @@
+{
+  "name": "running-tracker",
+  "private": true,
+  "description": "Google Sheets + Apps Script tracker for weekly and annual run/bike miles from Garmin and Apple Watch.",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "push": "clasp push"
+  },
+  "engines": { "node": ">=18" }
+}

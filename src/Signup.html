@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 24px auto; padding: 0 16px; color: #1f2328; }
+    h1 { font-size: 22px; }
+    label { display: block; margin-top: 14px; font-weight: 600; }
+    input, select { width: 100%; padding: 10px; margin-top: 4px; font-size: 16px; box-sizing: border-box; border: 1px solid #c8ccd1; border-radius: 6px; }
+    button { margin-top: 20px; width: 100%; padding: 12px; font-size: 16px; background: #1a7f37; color: #fff; border: 0; border-radius: 6px; }
+    button[disabled] { opacity: .6; }
+    .hint { font-size: 13px; color: #59636e; margin-top: 4px; }
+    .err { color: #cf222e; margin-top: 12px; }
+    .box { background: #f6f8fa; border: 1px solid #d1d9e0; border-radius: 6px; padding: 12px; margin-top: 12px; word-break: break-all; }
+    .tabs a { margin-right: 12px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="tabs"><a href="#" onclick="show('join');return false;">Join</a><a href="#" onclick="show('rekey');return false;">Update Garmin key</a></div>
+
+  <div id="join">
+    <h1>Join the running tracker</h1>
+    <form id="f" onsubmit="submitJoin(event)">
+      <label>Invite code<input name="inviteCode" required autocomplete="off"></label>
+      <label>Your name<input name="name" required maxlength="40"></label>
+      <label>Annual goal (run-equivalent miles)
+        <input name="goal" type="number" min="1" step="1" required>
+        <div class="hint">Run miles count 1:1. Bike miles count 1/3 (3 bike miles = 1 run mile).</div>
+      </label>
+      <label>Your watch
+        <select name="source" onchange="toggleKey(this.value)" required>
+          <option value="">Choose…</option>
+          <option value="garmin">Garmin (any phone)</option>
+          <option value="apple">Apple Watch</option>
+        </select>
+      </label>
+      <div id="keyField" class="hidden">
+        <label>Garmin Personal API key<input name="garminKey" autocomplete="off"></label>
+        <div class="hint">Create one at connect.garmin.com → Settings → Personal API Token. Pick the 1-year expiry. It is stored privately and never shown in the sheet.</div>
+      </div>
+      <button id="btn">Join</button>
+      <div id="err" class="err"></div>
+    </form>
+    <div id="done" class="hidden"></div>
+  </div>
+
+  <div id="rekey" class="hidden">
+    <h1>Update your Garmin key</h1>
+    <p class="hint">Garmin keys expire. Make a new one, then paste it here with the member code you got when you joined.</p>
+    <form onsubmit="submitRekey(event)">
+      <label>Member code<input id="rcode" required autocomplete="off"></label>
+      <label>New Garmin Personal API key<input id="rkey" required autocomplete="off"></label>
+      <button id="rbtn">Update key</button>
+      <div id="rmsg" class="err"></div>
+    </form>
+  </div>
+
+<script>
+  function show(id) {
+    document.getElementById('join').classList.toggle('hidden', id !== 'join');
+    document.getElementById('rekey').classList.toggle('hidden', id !== 'rekey');
+  }
+  function toggleKey(v) {
+    document.getElementById('keyField').classList.toggle('hidden', v !== 'garmin');
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+  }
+  function submitJoin(e) {
+    e.preventDefault();
+    var f = document.getElementById('f');
+    var data = Object.fromEntries(new FormData(f).entries());
+    var btn = document.getElementById('btn');
+    btn.disabled = true; btn.textContent = data.source === 'garmin' ? 'Checking key and loading your 2026 workouts…' : 'Joining…';
+    document.getElementById('err').textContent = '';
+    google.script.run
+      .withSuccessHandler(function (r) {
+        f.classList.add('hidden');
+        var html = '<h2>You\'re in!</h2><p>Your member code (save it somewhere):</p><div class="box">' + esc(r.memberCode) + '</div>';
+        if (r.source === 'apple') {
+          html += '<p>Set up the Apple Shortcut with these two values:</p>' +
+            '<p><b>Upload URL</b></p><div class="box">' + esc(r.endpointUrl) + '</div>' +
+            '<p><b>Member code</b></p><div class="box">' + esc(r.memberCode) + '</div>' +
+            '<p class="hint">Follow the Apple Watch steps the organizer sent you.</p>';
+        } else {
+          html += '<p>Your Garmin workouts since Jan 1, 2026 are loading now, and new ones sync every 3 hours. You need the member code only if your Garmin key expires.</p>';
+        }
+        document.getElementById('done').innerHTML = html;
+        document.getElementById('done').classList.remove('hidden');
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false; btn.textContent = 'Join';
+        document.getElementById('err').textContent = err.message || String(err);
+      })
+      .registerMember(data);
+  }
+  function submitRekey(e) {
+    e.preventDefault();
+    var b = document.getElementById('rbtn'); b.disabled = true;
+    google.script.run
+      .withSuccessHandler(function () { b.disabled = false; document.getElementById('rmsg').style.color = '#1a7f37'; document.getElementById('rmsg').textContent = 'Key updated.'; })
+      .withFailureHandler(function (err) { b.disabled = false; document.getElementById('rmsg').textContent = err.message || String(err); })
+      .updateGarminKey(document.getElementById('rcode').value, document.getElementById('rkey').value);
+  }
+</script>
+</body>
+</html>
